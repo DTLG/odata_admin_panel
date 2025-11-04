@@ -11,6 +11,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AppStarted>(_onAppStarted);
     on<LoggedIn>(_onLoggedIn);
     on<LoggedOut>(_onLoggedOut);
+    on<UserRequestedLogout>(_onUserRequestedLogout);
 
     // Слухаємо 'onAuthStateChange' для автоматичного оновлення стану
     client.auth.onAuthStateChange.listen((data) {
@@ -56,8 +57,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onLoggedOut(LoggedOut event, Emitter<AuthState> emit) async {
-    // 'onAuthStateChange' вже спрацював, але ми можемо
-    // додатково викликати signOut, якщо 'LoggedOut' прийшов від UI.
+    // Подія від onAuthStateChange: просто відображаємо стан
+    emit(const AuthState.unauthenticated());
+  }
+
+  Future<void> _onUserRequestedLogout(
+    UserRequestedLogout event,
+    Emitter<AuthState> emit,
+  ) async {
     await client.auth.signOut();
     emit(const AuthState.unauthenticated());
   }

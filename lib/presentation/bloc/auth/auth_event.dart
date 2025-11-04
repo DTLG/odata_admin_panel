@@ -18,3 +18,7 @@ class LoggedIn extends AuthEvent {
 class LoggedOut extends AuthEvent {
   const LoggedOut();
 }
+
+class UserRequestedLogout extends AuthEvent {
+  const UserRequestedLogout();
+}
