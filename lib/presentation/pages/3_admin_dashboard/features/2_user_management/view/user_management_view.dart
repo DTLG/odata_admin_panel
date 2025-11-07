@@ -1,7 +1,10 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:odata_admin_panel/domain/entities/user.dart' as domain;
 import 'package:odata_admin_panel/presentation/pages/3_admin_dashboard/features/2_user_management/bloc/user_management_bloc.dart';
+import 'package:odata_admin_panel/presentation/pages/3_admin_dashboard/features/2_user_management/view/personal_config_view.dart';
 
 class UserManagementView extends StatelessWidget {
   const UserManagementView({super.key});
@@ -95,14 +98,30 @@ class _UserListView extends StatelessWidget {
                 }
                 return Card(
                   child: ListTile(
-                    title: Text(title),
-                    subtitle: Text(
+                    title: SelectableText(title),
+                    subtitle: SelectableText(
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     trailing: Wrap(
                       spacing: 8,
                       children: [
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.settings, size: 16),
+                          label: const Text('Конфіг'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    PersonalConfigView(user: user),
+                              ),
+                            );
+                          },
+                        ),
                         ElevatedButton.icon(
                           icon: const Icon(Icons.edit, size: 16),
                           label: const Text('Логін'),
@@ -140,6 +159,47 @@ class _UserListView extends StatelessWidget {
     final passwordController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
+    // Функція генерації пароля з 8 символів
+    String _generatePassword() {
+      const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+      const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const numbers = '0123456789';
+      const allChars = lowercase + uppercase + numbers;
+
+      final random = Random();
+      final password = StringBuffer();
+
+      // Гарантуємо хоча б одну велику літеру, одну малу та одну цифру
+      password.write(uppercase[random.nextInt(uppercase.length)]);
+      password.write(lowercase[random.nextInt(lowercase.length)]);
+      password.write(numbers[random.nextInt(numbers.length)]);
+
+      // Додаємо решту 5 символів випадково
+      for (int i = 0; i < 5; i++) {
+        password.write(allChars[random.nextInt(allChars.length)]);
+      }
+
+      // Перемішуємо символи
+      final passwordList = password.toString().split('')..shuffle(random);
+      return passwordList.join();
+    }
+
+    // Функція генерації та вставки пароля
+    Future<void> _generateAndCopyPassword() async {
+      final password = _generatePassword();
+      passwordController.text = password;
+      await Clipboard.setData(ClipboardData(text: password));
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Пароль згенеровано та скопійовано в буфер обміну'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -161,9 +221,14 @@ class _UserListView extends StatelessWidget {
                   child: TextFormField(
                     controller: passwordController,
                     // obscureText: true,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Новий пароль',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.refresh),
+                        tooltip: 'Згенерувати пароль',
+                        onPressed: _generateAndCopyPassword,
+                      ),
                     ),
                     // validator: (value) {
                     //   if (value == null || value.isEmpty) {
@@ -175,6 +240,12 @@ class _UserListView extends StatelessWidget {
                     //   return null;
                     // },
                   ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: _generateAndCopyPassword,
+                  icon: const Icon(Icons.vpn_key, size: 18),
+                  label: const Text('Згенерувати пароль'),
                 ),
               ],
             ),

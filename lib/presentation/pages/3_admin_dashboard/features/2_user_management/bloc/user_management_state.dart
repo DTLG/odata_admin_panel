@@ -9,12 +9,14 @@ class UserManagementState extends Equatable {
   final UserUpdateStatus updateStatus;
   final List<User> users;
   final String message;
+  final String currentSearchTerm;
 
   const UserManagementState({
     this.status = SearchStatus.initial,
     this.updateStatus = UserUpdateStatus.initial,
     this.users = const [],
     this.message = '',
+    this.currentSearchTerm = '',
   });
 
   UserManagementState copyWith({
@@ -22,6 +24,7 @@ class UserManagementState extends Equatable {
     UserUpdateStatus? updateStatus,
     List<User>? users,
     String? message,
+    String? currentSearchTerm,
   }) {
     return UserManagementState(
       status: status ?? this.status,
@@ -30,9 +33,16 @@ class UserManagementState extends Equatable {
       message:
           message ??
           (updateStatus == UserUpdateStatus.initial ? '' : this.message),
+      currentSearchTerm: currentSearchTerm ?? this.currentSearchTerm,
     );
   }
 
   @override
-  List<Object> get props => [status, updateStatus, users, message];
+  List<Object> get props => [
+    status,
+    updateStatus,
+    users,
+    message,
+    currentSearchTerm,
+  ];
 }

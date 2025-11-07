@@ -1,3 +1,4 @@
+import 'package:odata_admin_panel/domain/entities/app_config.dart';
 import 'package:odata_admin_panel/domain/entities/schema_config.dart';
 import 'package:odata_admin_panel/domain/entities/user.dart';
 
@@ -24,4 +25,11 @@ abstract class IAdminRepository {
     required String agentNameColumn,
     required String agentPkColumn,
   });
+
+  // Персональні конфіги користувачів
+  Future<AppConfig> adminGetPersonalConfig(String userId);
+  Future<void> adminUpdatePersonalConfig(
+    String userId,
+    Map<String, dynamic> config,
+  );
 }

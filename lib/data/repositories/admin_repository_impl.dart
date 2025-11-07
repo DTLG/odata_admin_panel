@@ -1,5 +1,6 @@
 import 'package:odata_admin_panel/data/datasources/admin_remote_datasource.dart';
 import 'package:odata_admin_panel/data/models/schema_config_model.dart';
+import 'package:odata_admin_panel/domain/entities/app_config.dart';
 import 'package:odata_admin_panel/domain/entities/schema_config.dart';
 import 'package:odata_admin_panel/domain/entities/user.dart';
 import 'package:odata_admin_panel/domain/repositories/i_admin_repository.dart';
@@ -64,5 +65,19 @@ class AdminRepositoryImpl implements IAdminRepository {
       agentNameColumn: agentNameColumn,
       agentPkColumn: agentPkColumn,
     );
+  }
+
+  @override
+  Future<AppConfig> adminGetPersonalConfig(String userId) async {
+    final model = await remote.adminGetPersonalConfig(userId);
+    return model.toDomain();
+  }
+
+  @override
+  Future<void> adminUpdatePersonalConfig(
+    String userId,
+    Map<String, dynamic> config,
+  ) async {
+    await remote.adminUpdatePersonalConfig(userId, config);
   }
 }

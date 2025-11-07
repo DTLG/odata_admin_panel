@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:odata_admin_panel/data/models/app_config_model.dart';
 import 'package:odata_admin_panel/data/models/schema_config_model.dart';
 import 'package:odata_admin_panel/data/models/user_model.dart';
 
@@ -117,5 +118,28 @@ class AdminRemoteDataSource {
       },
     );
     return (response as Map).cast<String, dynamic>();
+  }
+
+  // Персональні конфіги користувачів
+  Future<AppConfigModel> adminGetPersonalConfig(String userId) async {
+    final response = await client.rpc(
+      'admin_get_personal_config',
+      params: {'p_user_id': userId},
+    );
+    if (response == null) {
+      // Якщо конфігу немає, повертаємо порожню модель
+      return const AppConfigModel();
+    }
+    return AppConfigModel.fromJson((response as Map).cast<String, dynamic>());
+  }
+
+  Future<void> adminUpdatePersonalConfig(
+    String userId,
+    Map<String, dynamic> config,
+  ) async {
+    await client.rpc(
+      'admin_update_personal_config',
+      params: {'p_user_id': userId, 'p_config_data': config},
+    );
   }
 }

@@ -34,15 +34,38 @@ class UserManagementBloc
     Emitter<UserManagementState> emit,
   ) async {
     if (event.term.isEmpty) {
-      emit(state.copyWith(status: SearchStatus.initial, users: const []));
+      emit(
+        state.copyWith(
+          status: SearchStatus.initial,
+          users: const [],
+          currentSearchTerm: '',
+        ),
+      );
       return;
     }
-    emit(state.copyWith(status: SearchStatus.loading));
+    emit(
+      state.copyWith(
+        status: SearchStatus.loading,
+        currentSearchTerm: event.term,
+      ),
+    );
     try {
       final users = await _searchUsers(event.term);
-      emit(state.copyWith(status: SearchStatus.success, users: users));
+      emit(
+        state.copyWith(
+          status: SearchStatus.success,
+          users: users,
+          currentSearchTerm: event.term,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: SearchStatus.failure, message: e.toString()));
+      emit(
+        state.copyWith(
+          status: SearchStatus.failure,
+          message: e.toString(),
+          currentSearchTerm: event.term,
+        ),
+      );
     }
   }
 
@@ -79,13 +102,30 @@ class UserManagementBloc
   ) async {
     emit(state.copyWith(updateStatus: UserUpdateStatus.loading));
     try {
+      // Викликаємо API для зміни логіна
       await _changeUserLogin(userId: event.userId, newLogin: event.newLogin);
+
+      // Емітуємо успіх
       emit(
         state.copyWith(
           updateStatus: UserUpdateStatus.success,
-          message: 'Логін успішно змінено. Оновіть список.',
+          message: 'Логін успішно змінено.',
         ),
       );
+
+      // Оновлюємо список, отримуючи свіжі дані з сервера
+      // (джерело правди - це завжди бекенд)
+      if (state.currentSearchTerm.isNotEmpty) {
+        emit(state.copyWith(status: SearchStatus.loading));
+        try {
+          final users = await _searchUsers(state.currentSearchTerm);
+          emit(state.copyWith(status: SearchStatus.success, users: users));
+        } catch (e) {
+          emit(
+            state.copyWith(status: SearchStatus.failure, message: e.toString()),
+          );
+        }
+      }
     } catch (e) {
       final msg = e.toString().contains('duplicate key')
           ? 'Помилка: Цей логін вже зайнятий.'

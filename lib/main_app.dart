@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:odata_admin_panel/core/theme/app_theme.dart';
 import 'package:odata_admin_panel/data/datasources/admin_remote_datasource.dart';
 import 'package:odata_admin_panel/data/repositories/admin_repository_impl.dart';
+import 'package:odata_admin_panel/domain/repositories/i_admin_repository.dart';
 import 'package:odata_admin_panel/domain/usecases/1_config/get_all_schemas.dart';
 import 'package:odata_admin_panel/domain/usecases/1_config/get_schema_config.dart';
 import 'package:odata_admin_panel/domain/usecases/1_config/provision_schema_config.dart';
@@ -25,30 +26,33 @@ class AdminApp extends StatelessWidget {
     final remote = AdminRemoteDataSource(client);
     final repo = AdminRepositoryImpl(remote);
 
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => AuthBloc(client)),
-        BlocProvider(
-          create: (_) => SchemaConfigCubit(
-            provisionSchemaConfig: ProvisionSchemaConfig(repo),
-            getAllSchemas: GetAllSchemas(repo),
-            getSchemaConfig: GetSchemaConfig(repo),
-            updateSchemaConfig: UpdateSchemaConfig(repo),
+    return RepositoryProvider<IAdminRepository>.value(
+      value: repo,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => AuthBloc(client)),
+          BlocProvider(
+            create: (_) => SchemaConfigCubit(
+              provisionSchemaConfig: ProvisionSchemaConfig(repo),
+              getAllSchemas: GetAllSchemas(repo),
+              getSchemaConfig: GetSchemaConfig(repo),
+              updateSchemaConfig: UpdateSchemaConfig(repo),
+            ),
           ),
-        ),
-        BlocProvider(
-          create: (_) => UserManagementBloc(
-            changeUserLogin: ChangeUserLogin(repo),
-            searchUsers: SearchUsers(repo),
-            changeUserPassword: ChangeUserPassword(repo),
+          BlocProvider(
+            create: (_) => UserManagementBloc(
+              changeUserLogin: ChangeUserLogin(repo),
+              searchUsers: SearchUsers(repo),
+              changeUserPassword: ChangeUserPassword(repo),
+            ),
           ),
+        ],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          home: const AuthGatePage(),
         ),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
-        darkTheme: AppTheme.dark(),
-        home: const AuthGatePage(),
       ),
     );
   }
