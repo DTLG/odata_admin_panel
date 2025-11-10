@@ -1,4 +1,5 @@
 import 'package:odata_admin_panel/domain/entities/app_config.dart';
+import 'package:odata_admin_panel/domain/entities/kontragent.dart';
 import 'package:odata_admin_panel/domain/entities/schema_config.dart';
 import 'package:odata_admin_panel/domain/entities/user.dart';
 
@@ -32,4 +33,7 @@ abstract class IAdminRepository {
     String userId,
     Map<String, dynamic> config,
   );
+
+  // Контрагенти
+  Future<List<Kontragent>> getKontragenty(String schemaName);
 }

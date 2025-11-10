@@ -1,6 +1,7 @@
 import 'package:odata_admin_panel/data/datasources/admin_remote_datasource.dart';
 import 'package:odata_admin_panel/data/models/schema_config_model.dart';
 import 'package:odata_admin_panel/domain/entities/app_config.dart';
+import 'package:odata_admin_panel/domain/entities/kontragent.dart';
 import 'package:odata_admin_panel/domain/entities/schema_config.dart';
 import 'package:odata_admin_panel/domain/entities/user.dart';
 import 'package:odata_admin_panel/domain/repositories/i_admin_repository.dart';
@@ -79,5 +80,11 @@ class AdminRepositoryImpl implements IAdminRepository {
     Map<String, dynamic> config,
   ) async {
     await remote.adminUpdatePersonalConfig(userId, config);
+  }
+
+  @override
+  Future<List<Kontragent>> getKontragenty(String schemaName) async {
+    final models = await remote.getKontragenty(schemaName);
+    return models.map((m) => m.toDomain()).toList();
   }
 }

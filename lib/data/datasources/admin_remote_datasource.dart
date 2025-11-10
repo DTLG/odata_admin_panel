@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:odata_admin_panel/data/models/app_config_model.dart';
+import 'package:odata_admin_panel/data/models/kontragent_model.dart';
 import 'package:odata_admin_panel/data/models/schema_config_model.dart';
 import 'package:odata_admin_panel/data/models/user_model.dart';
 
@@ -141,5 +142,37 @@ class AdminRemoteDataSource {
       'admin_update_personal_config',
       params: {'p_user_id': userId, 'p_config_data': config},
     );
+  }
+
+  // Отримання контрагентів для користувача
+  Future<List<KontragentModel>> getKontragenty(String schemaName) async {
+    try {
+      // Спробуємо використати RPC функцію (якщо вона є)
+      final response = await client.rpc(
+        'admin_get_kontragenty',
+        params: {'p_schema_name': schemaName},
+      );
+      final list =
+          (response as List?)?.cast<Map<String, dynamic>>() ??
+          <Map<String, dynamic>>[];
+      return list.map((m) => KontragentModel.fromJson(m)).toList();
+    } catch (e) {
+      // Якщо RPC функції немає, спробуємо прямий запит до таблиці
+      // (примітка: може не працювати, якщо схема не в search_path)
+      try {
+        final response = await client
+            .from('kontragenty')
+            .select()
+            .order('name');
+        final list =
+            (response as List?)?.cast<Map<String, dynamic>>() ??
+            <Map<String, dynamic>>[];
+        return list.map((m) => KontragentModel.fromJson(m)).toList();
+      } catch (e2) {
+        // Якщо і це не працює, повертаємо порожній список
+        print('Помилка отримання контрагентів: $e2');
+        return [];
+      }
+    }
   }
 }

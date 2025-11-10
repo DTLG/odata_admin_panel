@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:odata_admin_panel/domain/entities/user.dart' as domain;
 import 'package:odata_admin_panel/presentation/pages/3_admin_dashboard/features/2_user_management/bloc/user_management_bloc.dart';
+import 'package:odata_admin_panel/presentation/pages/3_admin_dashboard/features/2_user_management/view/kontragent_tree_view.dart';
 import 'package:odata_admin_panel/presentation/pages/3_admin_dashboard/features/2_user_management/view/personal_config_view.dart';
 
 class UserManagementView extends StatelessWidget {
@@ -106,6 +107,25 @@ class _UserListView extends StatelessWidget {
                     trailing: Wrap(
                       spacing: 8,
                       children: [
+                        if (user.schemaName != null)
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.route, size: 16),
+                            label: const Text('Маршрути'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => KontragentTreeView(
+                                    schemaName: user.schemaName!,
+                                    userName: user.displayName,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ElevatedButton.icon(
                           icon: const Icon(Icons.settings, size: 16),
                           label: const Text('Конфіг'),
