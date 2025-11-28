@@ -2,16 +2,23 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:odata_admin_panel/domain/entities/kontragent.dart';
 import 'package:odata_admin_panel/domain/usecases/3_kontragenty/get_kontragenty.dart';
+import 'package:odata_admin_panel/domain/repositories/i_admin_repository.dart';
 
 part 'kontragent_tree_state.dart';
 part 'kontragent_tree_node.dart';
 
 class KontragentTreeCubit extends Cubit<KontragentTreeState> {
   final GetKontragenty _getKontragenty;
+  final IAdminRepository _repository;
   final String _schemaName;
+  final String _agentGuid;
 
-  KontragentTreeCubit(this._getKontragenty, this._schemaName)
-    : super(const KontragentTreeState()) {
+  KontragentTreeCubit(
+    this._getKontragenty,
+    this._repository,
+    this._schemaName,
+    this._agentGuid,
+  ) : super(const KontragentTreeState()) {
     loadTree();
   }
 
@@ -34,8 +41,12 @@ class KontragentTreeCubit extends Cubit<KontragentTreeState> {
           nodes: nodes,
           expandedNodeIds: const {},
           flatVisibleList: flatList,
+          selectedNodeIds: const {},
         ),
       );
+
+      // Після завантаження дерева — підтягуємо активні маршрути агента
+      await _loadSelectedRoutes();
     } catch (e) {
       emit(state.copyWith(status: TreeStatus.failure, message: e.toString()));
     }
@@ -67,6 +78,73 @@ class KontragentTreeCubit extends Cubit<KontragentTreeState> {
     );
   }
 
+  /// Завантажуємо активні маршрути агента та відмічаємо їх
+  Future<void> _loadSelectedRoutes() async {
+    try {
+      final routeGuids = await _repository.getAgentRoutes(_agentGuid);
+      // Фільтруємо лише ті, що є в дереві
+      final exist = routeGuids.where((id) => state.nodes.containsKey(id));
+      emit(state.copyWith(selectedNodeIds: exist.toSet()));
+    } catch (_) {
+      // Ігноруємо помилку, UI залишиться без попереднього вибору
+    }
+  }
+
+  /// Позначає або знімає позначку з вузла та всіх його нащадків
+  void setNodeSelected(String nodeId, bool isSelected) {
+    final node = state.nodes[nodeId];
+    if (node == null) return;
+
+    final idsToAffect = _collectWithDescendants(node);
+    final newSelected = Set<String>.from(state.selectedNodeIds);
+
+    if (isSelected) {
+      newSelected.addAll(idsToAffect);
+    } else {
+      newSelected.removeAll(idsToAffect);
+    }
+
+    emit(state.copyWith(selectedNodeIds: newSelected));
+  }
+
+  /// Повертає множину ID: сам вузол + усі його нащадки
+  Set<String> _collectWithDescendants(TreeNode node) {
+    final result = <String>{node.id};
+    if (node is FolderNode) {
+      for (final child in node.children) {
+        result.addAll(_collectWithDescendants(child));
+      }
+    }
+    return result;
+  }
+
+  /// Повертає список ID тільки верхніх (кореневих) обраних вузлів
+  /// Вузол вважається "верхнім", якщо він обраний, але його батько не обраний
+  List<String> getTopLevelSelectedIds() {
+    final selected = state.selectedNodeIds;
+    final topLevelIds = <String>[];
+
+    for (final nodeId in selected) {
+      final node = state.nodes[nodeId];
+      if (node == null) continue;
+
+      // Перевіряємо, чи батько цього вузла також обраний
+      final parentGuid = node.parentGuid;
+      final isParentSelected =
+          parentGuid != null &&
+          parentGuid.isNotEmpty &&
+          parentGuid != '00000000-0000-0000-0000-000000000000' &&
+          selected.contains(parentGuid);
+
+      // Якщо батько не обраний (або його немає), то це верхній вузол
+      if (!isParentSelected) {
+        topLevelIds.add(nodeId);
+      }
+    }
+
+    return topLevelIds;
+  }
+
   /// "ВИРІВНЮВАЧ" (FLATTENER)
   /// Перетворює вкладену мапу 'nodes' у плаский список 'flatVisibleList'
   /// Тепер використовує 'expandedNodeIds' замість 'node.isExpanded'
@@ -78,7 +156,7 @@ class KontragentTreeCubit extends Cubit<KontragentTreeState> {
 
     // Отримуємо вузли верхнього рівня (де parentGuid == null)
     final rootNodes = allNodes.values
-        .where((n) => n.parentGuid == null)
+        .where((n) => n.parentGuid == '00000000-0000-0000-0000-000000000000')
         .toList();
 
     // Рекурсивно додаємо вузли

@@ -7,11 +7,13 @@ import 'package:odata_admin_panel/presentation/pages/3_admin_dashboard/features/
 class KontragentTreeView extends StatelessWidget {
   final String schemaName;
   final String userName;
+  final String agentGuid;
 
   const KontragentTreeView({
     super.key,
     required this.schemaName,
     required this.userName,
+    required this.agentGuid,
   });
 
   @override
@@ -19,7 +21,9 @@ class KontragentTreeView extends StatelessWidget {
     return BlocProvider(
       create: (context) => KontragentTreeCubit(
         GetKontragenty(context.read<IAdminRepository>()),
+        context.read<IAdminRepository>(),
         schemaName,
+        agentGuid,
       ),
       child: Scaffold(
         appBar: AppBar(title: Text('Маршрути для $userName')),
@@ -66,6 +70,35 @@ class KontragentTreeView extends StatelessWidget {
                   node: node,
                   isExpanded: state.expandedNodeIds.contains(node.id),
                 );
+              },
+            );
+          },
+        ),
+        floatingActionButton: Builder(
+          builder: (context) {
+            return FloatingActionButton.extended(
+              icon: const Icon(Icons.save),
+              label: const Text('Зберегти'),
+              onPressed: () async {
+                // Отримуємо тільки верхні (кореневі) обрані вузли без нащадків
+                final topLevelIds = context
+                    .read<KontragentTreeCubit>()
+                    .getTopLevelSelectedIds();
+                try {
+                  await context.read<IAdminRepository>().setAgentRoutes(
+                    agentGuid: agentGuid,
+                    routeGuids: topLevelIds,
+                  );
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Маршрути збережено')),
+                  );
+                } catch (e) {
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Помилка збереження: $e')),
+                  );
+                }
               },
             );
           },
@@ -121,12 +154,33 @@ class _TreeNodeWidget extends StatelessWidget {
         child: ListTile(
           dense: true,
           contentPadding: EdgeInsets.zero,
-          leading: Icon(
-            Icons.folder,
-            color: node.level == 0
-                ? Colors.blue.shade700
-                : Colors.blue.shade400,
-            size: 20,
+          leading: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              BlocBuilder<KontragentTreeCubit, KontragentTreeState>(
+                buildWhen: (prev, curr) =>
+                    prev.selectedNodeIds != curr.selectedNodeIds,
+                builder: (context, state) {
+                  final isChecked = state.selectedNodeIds.contains(node.id);
+                  return Checkbox(
+                    value: isChecked,
+                    onChanged: (value) {
+                      context.read<KontragentTreeCubit>().setNodeSelected(
+                        node.id,
+                        value ?? false,
+                      );
+                    },
+                  );
+                },
+              ),
+              Icon(
+                Icons.folder,
+                color: node.level == 0
+                    ? Colors.blue.shade700
+                    : Colors.blue.shade400,
+                size: 20,
+              ),
+            ],
           ),
           title: Text(
             node.name,

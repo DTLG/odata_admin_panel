@@ -3,6 +3,7 @@ import 'package:odata_admin_panel/data/models/app_config_model.dart';
 import 'package:odata_admin_panel/data/models/kontragent_model.dart';
 import 'package:odata_admin_panel/data/models/schema_config_model.dart';
 import 'package:odata_admin_panel/data/models/user_model.dart';
+import 'package:odata_admin_panel/domain/entities/login_pin.dart';
 
 // Вам потрібно буде імпортувати ваші моделі
 // import 'package:odata_admin_panel/data/models/schema_config_model.dart';
@@ -174,5 +175,54 @@ class AdminRemoteDataSource {
         return [];
       }
     }
+  }
+
+  // Збереження маршрутів агента (v2.0): без schemaName
+  Future<void> setAgentRoutes({
+    required String agentGuid,
+    required List<String> routeGuids,
+  }) async {
+    await client.rpc(
+      'admin_set_agent_routes',
+      params: {'p_user_id': agentGuid, 'p_route_guids': routeGuids},
+    );
+  }
+
+  // Отримання поточних маршрутів агента (список UUID рядків)
+  Future<List<String>> getAgentRoutes(String agentGuid) async {
+    final response = await client.rpc(
+      'admin_get_agent_routes',
+      params: {'p_user_id': agentGuid},
+    );
+    final list = (response as List?)?.cast<dynamic>() ?? <dynamic>[];
+    return list.map((e) => e.toString()).toList();
+  }
+
+  // Отримання пінів логінів для карти
+  // (Ваш Cubit або Repository)
+
+  Future<List<LoginPin>> getLoginPins({
+    String? userIdFilter,
+    required DateTime dateFrom,
+    required DateTime dateTo,
+    required String schemaName,
+  }) async {
+    // (!!!) ФІКС: Викликаємо 'admin_get_login_pins'
+    final response = await client.rpc(
+      'admin_get_login_pins',
+      params: {
+        // (!!!) ФІКС: Назви параметрів мають збігатися з SQL (з 'p_')
+        'p_schema_name': schemaName,
+        'p_user_id_filter': userIdFilter,
+        'p_date_from': dateFrom.toIso8601String(),
+        'p_date_to': dateTo.toIso8601String(),
+      },
+    );
+
+    // Ця частина залишається без змін
+    final list =
+        (response as List?)?.cast<Map<String, dynamic>>() ??
+        <Map<String, dynamic>>[];
+    return list.map((json) => LoginPin.fromJson(json)).toList();
   }
 }

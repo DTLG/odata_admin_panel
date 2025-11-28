@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:odata_admin_panel/core/theme/app_theme.dart';
 import 'package:odata_admin_panel/data/datasources/admin_remote_datasource.dart';
 import 'package:odata_admin_panel/data/repositories/admin_repository_impl.dart';
@@ -51,6 +53,23 @@ class AdminApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            fluent.FluentLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('uk')],
+          builder: (context, child) {
+            final theme = Theme.of(context);
+            return fluent.FluentTheme(
+              data: fluent.FluentThemeData(
+                brightness: theme.brightness,
+                accentColor: fluent.Colors.blue,
+              ),
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
           home: const AuthGatePage(),
         ),
       ),

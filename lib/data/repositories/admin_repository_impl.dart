@@ -2,6 +2,7 @@ import 'package:odata_admin_panel/data/datasources/admin_remote_datasource.dart'
 import 'package:odata_admin_panel/data/models/schema_config_model.dart';
 import 'package:odata_admin_panel/domain/entities/app_config.dart';
 import 'package:odata_admin_panel/domain/entities/kontragent.dart';
+import 'package:odata_admin_panel/domain/entities/login_pin.dart';
 import 'package:odata_admin_panel/domain/entities/schema_config.dart';
 import 'package:odata_admin_panel/domain/entities/user.dart';
 import 'package:odata_admin_panel/domain/repositories/i_admin_repository.dart';
@@ -86,5 +87,33 @@ class AdminRepositoryImpl implements IAdminRepository {
   Future<List<Kontragent>> getKontragenty(String schemaName) async {
     final models = await remote.getKontragenty(schemaName);
     return models.map((m) => m.toDomain()).toList();
+  }
+
+  @override
+  Future<void> setAgentRoutes({
+    required String agentGuid,
+    required List<String> routeGuids,
+  }) {
+    return remote.setAgentRoutes(agentGuid: agentGuid, routeGuids: routeGuids);
+  }
+
+  @override
+  Future<List<String>> getAgentRoutes(String agentGuid) {
+    return remote.getAgentRoutes(agentGuid);
+  }
+
+  @override
+  Future<List<LoginPin>> getLoginPins({
+    String? agentGuidFilter,
+    required DateTime dateFrom,
+    required DateTime dateTo,
+    required String schemaName,
+  }) {
+    return remote.getLoginPins(
+      userIdFilter: agentGuidFilter,
+      dateFrom: dateFrom,
+      dateTo: dateTo,
+      schemaName: schemaName,
+    );
   }
 }

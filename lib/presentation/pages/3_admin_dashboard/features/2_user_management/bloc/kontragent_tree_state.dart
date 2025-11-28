@@ -18,12 +18,17 @@ class KontragentTreeState extends Equatable {
   /// Це похідний список (він залежить від 'nodes' та 'expandedNodeIds')
   final List<String> flatVisibleList;
 
+  /// Обрані (позначені чекбоксом) вузли. Якщо позначено папку,
+  /// у цей набір додаються також усі її нащадки.
+  final Set<String> selectedNodeIds;
+
   const KontragentTreeState({
     this.status = TreeStatus.loading,
     this.message,
     this.nodes = const {},
     this.expandedNodeIds = const {},
     this.flatVisibleList = const [],
+    this.selectedNodeIds = const {},
   });
 
   KontragentTreeState copyWith({
@@ -32,6 +37,7 @@ class KontragentTreeState extends Equatable {
     Map<String, TreeNode>? nodes,
     Set<String>? expandedNodeIds,
     List<String>? flatVisibleList,
+    Set<String>? selectedNodeIds,
   }) {
     return KontragentTreeState(
       status: status ?? this.status,
@@ -39,6 +45,7 @@ class KontragentTreeState extends Equatable {
       nodes: nodes ?? this.nodes,
       expandedNodeIds: expandedNodeIds ?? this.expandedNodeIds,
       flatVisibleList: flatVisibleList ?? this.flatVisibleList,
+      selectedNodeIds: selectedNodeIds ?? this.selectedNodeIds,
     );
   }
 
@@ -49,5 +56,6 @@ class KontragentTreeState extends Equatable {
     nodes,
     expandedNodeIds,
     flatVisibleList,
+    selectedNodeIds,
   ];
 }

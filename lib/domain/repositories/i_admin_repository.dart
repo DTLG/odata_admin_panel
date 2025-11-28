@@ -1,5 +1,6 @@
 import 'package:odata_admin_panel/domain/entities/app_config.dart';
 import 'package:odata_admin_panel/domain/entities/kontragent.dart';
+import 'package:odata_admin_panel/domain/entities/login_pin.dart';
 import 'package:odata_admin_panel/domain/entities/schema_config.dart';
 import 'package:odata_admin_panel/domain/entities/user.dart';
 
@@ -36,4 +37,21 @@ abstract class IAdminRepository {
 
   // Контрагенти
   Future<List<Kontragent>> getKontragenty(String schemaName);
+
+  // Маршрути агента (збереження вибраних UUID)
+  Future<void> setAgentRoutes({
+    required String agentGuid,
+    required List<String> routeGuids,
+  });
+
+  // Отримати поточні маршрути агента (UUID)
+  Future<List<String>> getAgentRoutes(String agentGuid);
+
+  // Отримати піни логінів для карти
+  Future<List<LoginPin>> getLoginPins({
+    String? agentGuidFilter,
+    required DateTime dateFrom,
+    required DateTime dateTo,
+    required String schemaName,
+  });
 }
